@@ -22,13 +22,13 @@ app.use(express.json());
 const MARKETS = {
   "BINANCE:BTCUSDT": { name: "BTCUSDT", dec: 2, atrBase: 650, s: { binance:"BTCUSDT", bybit:"BTCUSDT", okx:"BTC-USDT", mexc:"BTCUSDT" } },
   "BINANCE:BCHUSDT": { name: "BCHUSDT", dec: 2, atrBase: 8, s: { binance:"BCHUSDT", bybit:"BCHUSDT", okx:"BCH-USDT", mexc:"BCHUSDT" } },
-  "OANDA:XAUUSD": { name: "XAUUSD", forex: true, dec: 3 },
-  "FX:EURUSD": { name: "EURUSD", forex: true, dec: 5 },
-  "FX:GBPUSD": { name: "GBPUSD", forex: true, dec: 5 }
+  "OANDA:XAUUSD": { name: "XAUUSD", forex: true, tdSymbol: "XAU/USD", dec: 3 },
+  "FX:EURUSD": { name: "EURUSD", forex: true, tdSymbol: "EUR/USD", dec: 5 },
+  "FX:GBPUSD": { name: "GBPUSD", forex: true, tdSymbol: "GBP/USD", dec: 5 }
 };
 
 app.get("/api/health", (req, res) => {
-  res.json({ ok:true, name:"MFX Backend", version:"14.2", providers:["Binance","Bybit","OKX","MEXC"] });
+  res.json({ ok:true, name:"MFX Backend", version:"14.3", providers:["Binance","Bybit","OKX","MEXC"] });
 });
 
 app.post("/api/analyze", async (req, res) => {
@@ -39,10 +39,30 @@ app.post("/api/analyze", async (req, res) => {
     if (!market) return res.status(400).json({ ok:false, message:"Unsupported market." });
 
     if (market.forex) {
-      return res.status(400).json({
-        ok:false,
-        message:`${market.name} is prepared but needs a Forex/Gold candle API in V14.2. Test BTCUSDT or BCHUSDT now.`
-      });
+      Key = process.env.TWELVE_DATA_API_KEY;
+
+      if (!apiKey) {
+        return res.status(500).json({
+          ok:false,
+          message:"TWELVE_DATA_API_KEY is missing in Render Environment."
+        });
+      }
+
+      const candles = await getTwelveDataCandles(
+        market.tdSymbol,
+        mapTwelveDataInterval(timeframe),
+        apiKey
+      );
+
+      if (!candles || candles.length < 80) {
+        return res.status(400).json({
+          ok:false,
+          message:`Twelve Data returned only ${candles ? candles.length : 0} candles for ${market.name}.`
+        });
+      }
+
+      const signal = analyze(candles, market, timeframe, "Twelve Data");
+      return res.json({ ok:true, signal });
     }
 
     const tf = mapInterval(timeframe);
@@ -58,6 +78,58 @@ app.post("/api/analyze", async (req, res) => {
     res.status(500).json({ ok:false, message:error.message || "AI backend error." });
   }
 });
+
+
+async function getTwelveDataCandles(symbol, interval, apiKey) {
+  const params = new URLSearchParams({
+    symbol,
+    interval,
+    outputsize: "200",
+    timezone: "UTC",
+    apikey: apiKey
+  });
+
+  const response = await fetch(`https://api.twelvedata.com/time_series?${params.toString()}`);
+
+  if (!response.ok) {
+    throw new Error(`Twelve Data HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.status === "error") {
+    throw new Error(data.message || "Twelve Data API error");
+  }
+
+  if (!Array.isArray(data.values)) {
+    throw new Error("Twelve Data returned no candle values.");
+  }
+
+  return data.values.map(v => ({
+    time: new Date(`${v.datetime}Z`).getTime(),
+    open: Number(v.open),
+    high: Number(v.high),
+    low: Number(v.low),
+    close: Number(v.close),
+    volume: Number(v.volume || 0)
+  })).filter(c =>
+    Number.isFinite(c.open) &&
+    Number.isFinite(c.high) &&
+    Number.isFinite(c.low) &&
+    Number.isFinite(c.close)
+  ).sort((a, b) => a.time - b.time);
+}
+
+function mapTwelveDataInterval(tf) {
+  return {
+    "1M": "1min",
+    "5M": "5min",
+    "15M": "15min",
+    "1H": "1h",
+    "4H": "4h",
+    "1D": "1day"
+  }[tf] || "1min";
+}
 
 async function getCandlesAny(market, tf) {
   const providers = [
@@ -239,6 +311,6 @@ function macdSignal(closes) { const lines=[]; for(let i=35;i<closes.length;i++){
 function sma(values) { return values.reduce((a,b)=>a+b,0)/values.length; }
 
 app.listen(PORT, () => {
-  console.log(`MFX Backend V14.2 running on http://localhost:${PORT}`);
+  console.log(`MFX Backend V14.3 running on http://localhost:${PORT}`);
   console.log("Providers: Binance -> Bybit -> OKX -> MEXC");
 });

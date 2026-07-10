@@ -1,28 +1,13 @@
-# MFX Indicator V14.2 Hosted Backend
+# MFX Indicator V14.3 Gold & Forex
 
-This version is prepared to solve local DNS blocking by moving market-data requests to a hosted backend.
+Adds Twelve Data support for XAUUSD, EURUSD, and GBPUSD.
 
-## Local run
+Render environment variable required:
 
-npm.cmd install
-cd backend
-npm.cmd install
-cd ..
-npm.cmd run dev
+TWELVE_DATA_API_KEY=your_real_key
 
-Open http://127.0.0.1:5173
+Push changes to GitHub:
 
-## Hosted setup
-
-Read `DEPLOY_RENDER.md`.
-
-After Render gives you a backend URL, create `.env` in the main folder:
-
-VITE_API_URL=https://YOUR-BACKEND-NAME.onrender.com
-
-Then restart:
-
-npm.cmd run dev
-
-V14.2 keeps the provider fallback:
-Binance -> Bybit -> OKX -> MEXC
+git add .
+git commit -m "Add Twelve Data gold and forex support"
+git push origin main

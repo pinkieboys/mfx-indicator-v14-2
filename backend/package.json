@@ -1,6 +1,6 @@
 {
   "name": "mfx-backend-v14",
-  "version": "14.2.0",
+  "version": "14.3.0",
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",

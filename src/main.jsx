@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./style.css";
 
-const API = "https://mfx-backend.onrender.com";
+const API = "http://localhost:3000";
 
 const markets = [
   { symbol: "BINANCE:BTCUSDT", name: "BTCUSDT", label: "Bitcoin" },
@@ -43,7 +43,7 @@ function App() {
       {page === "profile" && <Profile user={user} loginDemo={loginDemo} logout={logout} />}
       {page === "history" && <History />}
       {page === "learning" && <Learning />}
-      <footer>© 2026 MFX Indicator V14.2 Hosted Backend</footer>
+      <footer>© 2026 MFX Indicator V14.3 Gold & Forex</footer>
     </div>
   );
 }
@@ -55,7 +55,7 @@ function Header({ page, setPage, user, loginDemo }) {
         <div className="brandMark">MFX</div>
         <div>
           <b>MFX Indicator</b>
-          <small>V14.2 Hosted Backend</small>
+          <small>V14.3 Gold & Forex</small>
         </div>
       </div>
 
@@ -83,7 +83,7 @@ function Home({ setPage }) {
         <p className="pill">AI Trading Platform Foundation</p>
         <h1>MFX Indicator is now becoming a real full-stack app.</h1>
         <p>
-          V14.2 connects a React frontend with a Node.js backend, preparing the app for real AI signals,
+          V14.3 connects a React frontend with a Node.js backend, preparing the app for real AI signals,
           users, payments, history, and live market analysis.
         </p>
         <div className="actions">
@@ -276,7 +276,7 @@ function Profile({ user, loginDemo, logout }) {
             <div>Level<br /><b>{user.level}</b></div>
             <div>Signals<br /><b>{getHistory().length}</b></div>
             <div>Status<br /><b>Tester</b></div>
-            <div>Version<br /><b>V14.2</b></div>
+            <div>Version<br /><b>V14.3</b></div>
           </div>
         </section>
       </div>
@@ -315,7 +315,7 @@ function Learning() {
   return (
     <main className="section">
       <h1>Learning Center</h1>
-      <p>V14.2 keeps this basic. V14.6 will upgrade lessons and reviews.</p>
+      <p>V14.3 keeps this basic. V14.6 will upgrade lessons and reviews.</p>
       <div className="cards">
         {["Forex Basics", "Candlesticks", "Support & Resistance", "Risk Management"].map((x) => (
           <div className="card" key={x}>
